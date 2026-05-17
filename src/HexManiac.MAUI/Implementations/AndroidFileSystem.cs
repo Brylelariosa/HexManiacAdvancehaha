@@ -1,3 +1,4 @@
+using HavenSoft.HexManiac.Core;
 using HavenSoft.HexManiac.Core.Models;
 using HavenSoft.HexManiac.Core.ViewModels;
 using HavenSoft.HexManiac.Core.ViewModels.Images;
@@ -8,6 +9,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+// Alias to disambiguate from Microsoft.Maui.Storage.IFileSystem
+using CoreIFileSystem = HavenSoft.HexManiac.Core.Models.IFileSystem;
 
 namespace HavenSoft.HexManiac.MAUI.Implementations {
    /// <summary>
@@ -15,7 +18,7 @@ namespace HavenSoft.HexManiac.MAUI.Implementations {
    /// Uses MAUI FilePicker (which calls Android's Storage Access Framework) for
    /// open/save dialogs, and Android Clipboard for copy/paste.
    /// </summary>
-   public class AndroidFileSystem : IFileSystem, IWorkDispatcher {
+   public class AndroidFileSystem : CoreIFileSystem, IWorkDispatcher {
       // ── Clipboard ──────────────────────────────────────────────────────────
 
       public string CopyText {
@@ -82,14 +85,14 @@ namespace HavenSoft.HexManiac.MAUI.Implementations {
 
       // ── File watching ───────────────────────────────────────────────────────
 
-      private readonly Dictionary<string, List<Action<IFileSystem>>> listeners = new();
+      private readonly Dictionary<string, List<Action<CoreIFileSystem>>> listeners = new();
 
-      public void AddListenerToFile(string fileName, Action<IFileSystem> listener) {
-         if (!listeners.ContainsKey(fileName)) listeners[fileName] = new List<Action<IFileSystem>>();
+      public void AddListenerToFile(string fileName, Action<CoreIFileSystem> listener) {
+         if (!listeners.ContainsKey(fileName)) listeners[fileName] = new List<Action<CoreIFileSystem>>();
          listeners[fileName].Add(listener);
       }
 
-      public void RemoveListenerForFile(string fileName, Action<IFileSystem> listener) {
+      public void RemoveListenerForFile(string fileName, Action<CoreIFileSystem> listener) {
          if (listeners.TryGetValue(fileName, out var list)) list.Remove(listener);
       }
 
@@ -161,7 +164,7 @@ namespace HavenSoft.HexManiac.MAUI.Implementations {
 
       public bool TryLoadIndexedImage(ref string fileName, out int[,] image, out IReadOnlyList<short> palette) {
          image = null; palette = null;
-         // Indexed PNG loading requires a PNG decoder. Return false (not supported in initial port).
+         // Indexed PNG loading requires a PNG decoder. Return false (not supported in initial port)
          return false;
       }
 

@@ -9,7 +9,7 @@ on:
   workflow_dispatch:     # allow manual trigger from the Actions tab
 
 env:
-  DOTNET_VERSION: '8.0.x'
+  DOTNET_VERSION: '9.0.x'
   MAUI_PROJECT:   src/HexManiac.MAUI/HexManiac.MAUI.csproj
 
 jobs:
@@ -49,7 +49,7 @@ jobs:
       - name: Build debug APK
         run: |
           dotnet build ${{ env.MAUI_PROJECT }} \
-            -f net8.0-android \
+            -f net9.0-android \
             -c Debug \
             --no-restore \
             -p:AndroidSdkDirectory=$ANDROID_SDK_ROOT
@@ -59,7 +59,7 @@ jobs:
         with:
           name: HexManiacAdvance-debug-${{ github.sha }}
           path: |
-            **/bin/Debug/net8.0-android/*.apk
+            **/bin/Debug/net9.0-android/*.apk
           retention-days: 14
 
   # ─────────────────────────────────────────────────────────────────────────────
@@ -112,7 +112,7 @@ jobs:
           KEYSTORE_PASS:  ${{ secrets.KEYSTORE_PASS }}
         run: |
           dotnet publish ${{ env.MAUI_PROJECT }} \
-            -f net8.0-android \
+            -f net9.0-android \
             -c Release \
             --no-restore \
             -p:AndroidSdkDirectory=$ANDROID_SDK_ROOT \

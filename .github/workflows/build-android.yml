@@ -43,15 +43,11 @@ jobs:
           dotnet workload install maui-android --skip-sign-check
           dotnet workload restore ${{ env.MAUI_PROJECT }}
 
-      - name: Restore NuGet packages
-        run: dotnet restore ${{ env.MAUI_PROJECT }}
-
       - name: Build debug APK
         run: |
           dotnet build ${{ env.MAUI_PROJECT }} \
             -f net9.0-android \
             -c Debug \
-            --no-restore \
             -p:AndroidSdkDirectory=$ANDROID_SDK_ROOT
 
       - name: Upload debug APK
@@ -98,9 +94,6 @@ jobs:
           dotnet workload install maui-android --skip-sign-check
           dotnet workload restore ${{ env.MAUI_PROJECT }}
 
-      - name: Restore NuGet packages
-        run: dotnet restore ${{ env.MAUI_PROJECT }}
-
       - name: Decode keystore from secret
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > /tmp/hexmaniac.jks
@@ -114,7 +107,6 @@ jobs:
           dotnet publish ${{ env.MAUI_PROJECT }} \
             -f net9.0-android \
             -c Release \
-            --no-restore \
             -p:AndroidSdkDirectory=$ANDROID_SDK_ROOT \
             -p:AndroidKeyStore=true \
             -p:AndroidSigningKeyStore=/tmp/hexmaniac.jks \

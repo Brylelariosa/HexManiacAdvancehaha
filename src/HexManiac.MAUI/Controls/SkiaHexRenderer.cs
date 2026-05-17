@@ -4,6 +4,8 @@ using HavenSoft.HexManiac.Core.ViewModels.DataFormats;
 using SkiaSharp;
 using System;
 using ModelPoint = HavenSoft.HexManiac.Core.Models.Point;
+// Alias to disambiguate from System.Tuple
+using DataTuple = HavenSoft.HexManiac.Core.ViewModels.DataFormats.Tuple;
 
 namespace HavenSoft.HexManiac.MAUI.Controls {
    /// <summary>
@@ -160,7 +162,7 @@ namespace HavenSoft.HexManiac.MAUI.Controls {
          canvas.DrawRect(cellRect.Inflate(-2, -2), fillPaint);
       }
 
-      public void Visit(Tuple tuple, byte data) => DrawHex(data, ColorEnum);
+      public void Visit(DataTuple tuple, byte data) => DrawHex(data, ColorEnum);
 
       // ── Drawing helpers ───────────────────────────────────────────────────────
 

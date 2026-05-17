@@ -38,8 +38,8 @@
     <MauiIcon Include="Resources\Images\appicon.png" />
     <!-- Splash screen -->
     <MauiSplashScreen Include="Resources\Images\splash.png" Color="#1E1E2E" />
-    <!-- Fonts -->
-    <MauiFont Include="Resources\Fonts\Consolas.ttf" />
+    <!-- Fonts — only included if the file actually exists (CI creates a placeholder) -->
+    <MauiFont Include="Resources\Fonts\Consolas.ttf" Condition="Exists('Resources\Fonts\Consolas.ttf')" />
     <!-- Raw assets bundled into the APK -->
     <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>

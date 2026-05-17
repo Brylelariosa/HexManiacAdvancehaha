@@ -1,0 +1,205 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main, master]
+    tags:     ['v*']
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:     # allow manual trigger from the Actions tab
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  MAUI_PROJECT:   src/HexManiac.MAUI/HexManiac.MAUI.csproj
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Debug APK — fast, runs on every push, no signing needed
+  # ─────────────────────────────────────────────────────────────────────────────
+  build-debug:
+    name: Debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'microsoft'
+
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Remove SDK version pin (global.json pins to .NET 6, incompatible with MAUI)
+        run: rm -f global.json
+
+      - name: Create placeholder assets if missing
+        run: |
+          mkdir -p src/HexManiac.MAUI/Resources/Images
+          mkdir -p src/HexManiac.MAUI/Resources/Fonts
+          python3 -c "
+          import base64, os
+
+          # Minimal 1x1 transparent PNG
+          png = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==')
+          for f in ['src/HexManiac.MAUI/Resources/Images/appicon.png',
+                    'src/HexManiac.MAUI/Resources/Images/splash.png']:
+              if not os.path.exists(f):
+                  open(f, 'wb').write(png)
+                  print(f'Created placeholder: {f}')
+              else:
+                  print(f'Already exists: {f}')
+
+          # Minimal valid TTF (just enough for the build to copy the file)
+          ttf_stub = base64.b64decode(
+              'AABAAAAQAAIABAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=='
+          )
+          f = 'src/HexManiac.MAUI/Resources/Fonts/Consolas.ttf'
+          if not os.path.exists(f):
+              open(f, 'wb').write(ttf_stub)
+              print(f'Created placeholder: {f}')
+          else:
+              print(f'Already exists: {f}')
+          "
+
+      - name: Install MAUI Android workload
+        run: |
+          dotnet workload install maui-android --skip-sign-check
+          dotnet workload restore ${{ env.MAUI_PROJECT }}
+
+      - name: Build debug APK
+        run: |
+          dotnet build ${{ env.MAUI_PROJECT }} \
+            -f net9.0-android \
+            -c Debug \
+            -p:AndroidSdkDirectory=$ANDROID_SDK_ROOT
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: HexManiacAdvance-debug-${{ github.sha }}
+          path: |
+            **/bin/Debug/net9.0-android/*.apk
+          retention-days: 14
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Release APK — signed, runs only on version tags (e.g. v1.2.3)
+  # Requires these repository secrets:
+  #   KEYSTORE_BASE64   base64-encoded .jks keystore file
+  #   KEYSTORE_ALIAS    key alias inside the keystore
+  #   KEYSTORE_PASS     store + key password
+  # ─────────────────────────────────────────────────────────────────────────────
+  build-release:
+    name: Release APK (signed)
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build-debug
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'microsoft'
+
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Remove SDK version pin (global.json pins to .NET 6, incompatible with MAUI)
+        run: rm -f global.json
+
+      - name: Create placeholder assets if missing
+        run: |
+          mkdir -p src/HexManiac.MAUI/Resources/Images
+          mkdir -p src/HexManiac.MAUI/Resources/Fonts
+          python3 -c "
+          import base64, os
+
+          png = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==')
+          for f in ['src/HexManiac.MAUI/Resources/Images/appicon.png',
+                    'src/HexManiac.MAUI/Resources/Images/splash.png']:
+              if not os.path.exists(f):
+                  open(f, 'wb').write(png)
+                  print(f'Created placeholder: {f}')
+              else:
+                  print(f'Already exists: {f}')
+
+          ttf_stub = base64.b64decode(
+              'AABAAAAQAAIABAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=='
+          )
+          f = 'src/HexManiac.MAUI/Resources/Fonts/Consolas.ttf'
+          if not os.path.exists(f):
+              open(f, 'wb').write(ttf_stub)
+              print(f'Created placeholder: {f}')
+          else:
+              print(f'Already exists: {f}')
+          "
+
+      - name: Install MAUI Android workload
+        run: |
+          dotnet workload install maui-android --skip-sign-check
+          dotnet workload restore ${{ env.MAUI_PROJECT }}
+
+      - name: Decode keystore from secret
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > /tmp/hexmaniac.jks
+
+      - name: Publish signed release APK
+        env:
+          KEYSTORE_PATH:  /tmp/hexmaniac.jks
+          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
+          KEYSTORE_PASS:  ${{ secrets.KEYSTORE_PASS }}
+        run: |
+          dotnet publish ${{ env.MAUI_PROJECT }} \
+            -f net9.0-android \
+            -c Release \
+            -p:AndroidSdkDirectory=$ANDROID_SDK_ROOT \
+            -p:AndroidKeyStore=true \
+            -p:AndroidSigningKeyStore=/tmp/hexmaniac.jks \
+            -p:AndroidSigningKeyAlias=$KEYSTORE_ALIAS \
+            -p:AndroidSigningKeyPass=$KEYSTORE_PASS \
+            -p:AndroidSigningStorePass=$KEYSTORE_PASS
+
+      - name: Locate APK
+        id: locate_apk
+        run: |
+          APK=$(find . -name "*-Signed.apk" -o -name "*.apk" | grep -i release | head -1)
+          echo "apk_path=$APK" >> $GITHUB_OUTPUT
+
+      - name: Upload signed APK as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HexManiacAdvance-${{ github.ref_name }}-signed
+          path: ${{ steps.locate_apk.outputs.apk_path }}
+          retention-days: 90
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.locate_apk.outputs.apk_path }}
+          name:  HexManiacAdvance ${{ github.ref_name }}
+          body: |
+            ## HexManiacAdvance for Android ${{ github.ref_name }}
+
+            ### What's included
+            - Full GBA ROM hex editor on Android
+            - Open / Save .gba files via Android file picker
+            - Pointer navigation, table editing, script viewer
+            - Dark theme matching the desktop version
+
+            ### Install
+            1. Download `HexManiacAdvance-*.apk`
+            2. Enable **Install from unknown sources** in Android settings
+            3. Open the APK to install
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

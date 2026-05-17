@@ -16,6 +16,8 @@
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <SupportedOSPlatformVersion>26</SupportedOSPlatformVersion>
+    <TargetPlatformVersion>35</TargetPlatformVersion>
 
     <!-- Suppress IronPython Reflection.Emit warnings on Android -->
     <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>

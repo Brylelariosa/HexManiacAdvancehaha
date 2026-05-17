@@ -38,6 +38,22 @@ jobs:
       - name: Remove SDK version pin (global.json pins to .NET 6, incompatible with MAUI)
         run: rm -f global.json
 
+      - name: Create placeholder images if missing
+        run: |
+          mkdir -p src/HexManiac.MAUI/Resources/Images
+          python3 -c "
+          import base64, os
+          # Minimal 1x1 transparent PNG
+          png = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==')
+          for f in ['src/HexManiac.MAUI/Resources/Images/appicon.png',
+                    'src/HexManiac.MAUI/Resources/Images/splash.png']:
+              if not os.path.exists(f):
+                  open(f, 'wb').write(png)
+                  print(f'Created placeholder: {f}')
+              else:
+                  print(f'Already exists: {f}')
+          "
+
       - name: Install MAUI Android workload
         run: |
           dotnet workload install maui-android --skip-sign-check
@@ -88,6 +104,21 @@ jobs:
 
       - name: Remove SDK version pin (global.json pins to .NET 6, incompatible with MAUI)
         run: rm -f global.json
+
+      - name: Create placeholder images if missing
+        run: |
+          mkdir -p src/HexManiac.MAUI/Resources/Images
+          python3 -c "
+          import base64, os
+          png = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==')
+          for f in ['src/HexManiac.MAUI/Resources/Images/appicon.png',
+                    'src/HexManiac.MAUI/Resources/Images/splash.png']:
+              if not os.path.exists(f):
+                  open(f, 'wb').write(png)
+                  print(f'Created placeholder: {f}')
+              else:
+                  print(f'Already exists: {f}')
+          "
 
       - name: Install MAUI Android workload
         run: |

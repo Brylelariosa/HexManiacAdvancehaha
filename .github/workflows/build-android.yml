@@ -35,6 +35,9 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      - name: Remove SDK version pin (global.json pins to .NET 6, incompatible with MAUI)
+        run: rm -f global.json
+
       - name: Install MAUI Android workload
         run: |
           dotnet workload install maui-android --skip-sign-check
@@ -86,6 +89,9 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Remove SDK version pin (global.json pins to .NET 6, incompatible with MAUI)
+        run: rm -f global.json
 
       - name: Install MAUI Android workload
         run: |

@@ -38,11 +38,13 @@ jobs:
       - name: Remove SDK version pin (global.json pins to .NET 6, incompatible with MAUI)
         run: rm -f global.json
 
-      - name: Create placeholder images if missing
+      - name: Create placeholder assets if missing
         run: |
           mkdir -p src/HexManiac.MAUI/Resources/Images
+          mkdir -p src/HexManiac.MAUI/Resources/Fonts
           python3 -c "
           import base64, os
+
           # Minimal 1x1 transparent PNG
           png = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==')
           for f in ['src/HexManiac.MAUI/Resources/Images/appicon.png',
@@ -52,6 +54,17 @@ jobs:
                   print(f'Created placeholder: {f}')
               else:
                   print(f'Already exists: {f}')
+
+          # Minimal valid TTF (just enough for the build to copy the file)
+          ttf_stub = base64.b64decode(
+              'AABAAAAQAAIABAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=='
+          )
+          f = 'src/HexManiac.MAUI/Resources/Fonts/Consolas.ttf'
+          if not os.path.exists(f):
+              open(f, 'wb').write(ttf_stub)
+              print(f'Created placeholder: {f}')
+          else:
+              print(f'Already exists: {f}')
           "
 
       - name: Install MAUI Android workload
@@ -105,11 +118,13 @@ jobs:
       - name: Remove SDK version pin (global.json pins to .NET 6, incompatible with MAUI)
         run: rm -f global.json
 
-      - name: Create placeholder images if missing
+      - name: Create placeholder assets if missing
         run: |
           mkdir -p src/HexManiac.MAUI/Resources/Images
+          mkdir -p src/HexManiac.MAUI/Resources/Fonts
           python3 -c "
           import base64, os
+
           png = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==')
           for f in ['src/HexManiac.MAUI/Resources/Images/appicon.png',
                     'src/HexManiac.MAUI/Resources/Images/splash.png']:
@@ -118,6 +133,16 @@ jobs:
                   print(f'Created placeholder: {f}')
               else:
                   print(f'Already exists: {f}')
+
+          ttf_stub = base64.b64decode(
+              'AABAAAAQAAIABAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=='
+          )
+          f = 'src/HexManiac.MAUI/Resources/Fonts/Consolas.ttf'
+          if not os.path.exists(f):
+              open(f, 'wb').write(ttf_stub)
+              print(f'Created placeholder: {f}')
+          else:
+              print(f'Already exists: {f}')
           "
 
       - name: Install MAUI Android workload

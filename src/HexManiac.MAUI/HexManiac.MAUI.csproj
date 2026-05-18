@@ -16,6 +16,7 @@
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <SupportedOSPlatformVersion>26</SupportedOSPlatformVersion>
 
     <!-- Suppress IronPython Reflection.Emit warnings on Android -->
     <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
@@ -43,8 +44,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Maui.Controls" Version="9.0.91" />
-    <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.91" />
+    <PackageReference Include="Microsoft.Maui.Controls" Version="9.0.100" />
+    <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.100" />
     <PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="2.88.8" />
     <PackageReference Include="SkiaSharp" Version="2.88.8" />
     <PackageReference Include="CommunityToolkit.Maui" Version="9.1.0" />

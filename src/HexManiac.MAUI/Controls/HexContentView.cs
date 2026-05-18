@@ -91,8 +91,9 @@ namespace HavenSoft.HexManiac.MAUI.Controls {
          using var paint = new SKPaint { Color = new SKColor(0x45, 0x47, 0x5A), IsAntialias = true };
          using var font  = new SKFont(SKTypeface.FromFamilyName("monospace"), FontSize * 0.8f);
          for (int col = 0; col < _viewPort.Width; col++) {
-            float x = HeaderWidth + col * CellWidth + (CellWidth - font.MeasureText($"{col % 16:X}")) / 2f;
-            var _colStr = $"{col % 16:X}"; canvas.DrawText(MemoryMarshal.Cast<char, ushort>(_colStr.AsSpan()), x, FontSize, font, paint);
+            var _col = $"{col % 16:X}";
+            float x = HeaderWidth + col * CellWidth + (CellWidth - font.MeasureText(System.Runtime.InteropServices.MemoryMarshal.Cast<char, ushort>(_col.AsSpan()))) / 2f;
+            canvas.DrawText(_col, x, FontSize, font, paint);
          }
       }
 
@@ -102,7 +103,7 @@ namespace HavenSoft.HexManiac.MAUI.Controls {
          for (int row = 0; row < _viewPort.Height; row++) {
             int addr = (_viewPort.ScrollValue + row) * _viewPort.Width;
             float y = HeaderHeight + row * CellHeight + CellHeight * 0.72f;
-            var _addrStr = $"{addr:X6}"; canvas.DrawText(MemoryMarshal.Cast<char, ushort>(_addrStr.AsSpan()), 2f, y, font, paint);
+            var _addrStr = $"{addr:X6}"; canvas.DrawText(_addrStr, 2f, y, font, paint);
          }
       }
 

@@ -16,8 +16,6 @@
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     <AndroidPackageFormat>apk</AndroidPackageFormat>
-    <SupportedOSPlatformVersion>26</SupportedOSPlatformVersion>
-    <TargetPlatformVersion>35</TargetPlatformVersion>
 
     <!-- Suppress IronPython Reflection.Emit warnings on Android -->
     <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
@@ -38,18 +36,18 @@
     <MauiIcon Include="Resources\Images\appicon.png" />
     <!-- Splash screen -->
     <MauiSplashScreen Include="Resources\Images\splash.png" Color="#1E1E2E" />
-    <!-- Fonts — only included if the file actually exists (CI creates a placeholder) -->
-    <MauiFont Include="Resources\Fonts\Consolas.ttf" Condition="Exists('Resources\Fonts\Consolas.ttf')" />
+    <!-- Fonts -->
+    <MauiFont Include="Resources\Fonts\Consolas.ttf" />
     <!-- Raw assets bundled into the APK -->
     <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Maui.Controls" Version="9.0.120" />
-    <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.120" />
+    <PackageReference Include="Microsoft.Maui.Controls" Version="9.0.91" />
+    <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.91" />
     <PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="2.88.8" />
     <PackageReference Include="SkiaSharp" Version="2.88.8" />
-    <PackageReference Include="CommunityToolkit.Maui" Version="11.0.0" />
+    <PackageReference Include="CommunityToolkit.Maui" Version="9.1.0" />
   </ItemGroup>
 
   <ItemGroup>

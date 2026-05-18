@@ -103,9 +103,9 @@ namespace HavenSoft.HexManiac.MAUI.Controls {
          var f = small ? fontSmall : font;
          f.SkewX = italic ? -0.25f : 0f;
          paint.Color = color;
-         float x = Position.X * cellWidth + (cellWidth - f.MeasureText(text)) / 2f;
+         float x = Position.X * cellWidth + (cellWidth - f.MeasureText(MemoryMarshal.Cast<char, ushort>(text.AsSpan()))) / 2f;
          float y = Position.Y * cellHeight + (cellHeight + f.Size) / 2f - 2f;
-         canvas.DrawText(MemoryMarshal.Cast<char, ushort>(text.AsSpan()), x, y, f, paint);
+         canvas.DrawText(text, x, y, f, paint);
       }
    }
 }

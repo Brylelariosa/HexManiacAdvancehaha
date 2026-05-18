@@ -3,6 +3,7 @@ using HavenSoft.HexManiac.Core.ViewModels;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Devices;
 using SkiaSharp;
+using System.Runtime.InteropServices;
 using SkiaSharp.Views.Maui;
 using SkiaSharp.Views.Maui.Controls;
 using System;
@@ -91,7 +92,7 @@ namespace HavenSoft.HexManiac.MAUI.Controls {
          using var font  = new SKFont(SKTypeface.FromFamilyName("monospace"), FontSize * 0.8f);
          for (int col = 0; col < _viewPort.Width; col++) {
             float x = HeaderWidth + col * CellWidth + (CellWidth - font.MeasureText($"{col % 16:X}")) / 2f;
-            canvas.DrawText($"{col % 16:X}", x, FontSize, font, paint);
+            var _colStr = $"{col % 16:X}"; canvas.DrawText(MemoryMarshal.Cast<char, ushort>(_colStr.AsSpan()), x, FontSize, font, paint);
          }
       }
 
@@ -101,7 +102,7 @@ namespace HavenSoft.HexManiac.MAUI.Controls {
          for (int row = 0; row < _viewPort.Height; row++) {
             int addr = (_viewPort.ScrollValue + row) * _viewPort.Width;
             float y = HeaderHeight + row * CellHeight + CellHeight * 0.72f;
-            canvas.DrawText($"{addr:X6}", 2f, y, font, paint);
+            var _addrStr = $"{addr:X6}"; canvas.DrawText(MemoryMarshal.Cast<char, ushort>(_addrStr.AsSpan()), 2f, y, font, paint);
          }
       }
 

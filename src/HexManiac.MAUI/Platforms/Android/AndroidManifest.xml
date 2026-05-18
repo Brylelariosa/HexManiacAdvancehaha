@@ -16,21 +16,6 @@
     android:roundIcon="@mipmap/appicon_round"
     android:supportsRtl="true"
     android:theme="@style/Maui.SplashTheme">
-
-    <!-- File associations: .gba and .hma files open the app -->
-    <activity android:name="crc64..." android:exported="true">
-      <intent-filter>
-        <action android:name="android.intent.action.VIEW" />
-        <category android:name="android.intent.category.DEFAULT" />
-        <data android:mimeType="application/octet-stream" android:pathPattern=".*\\.gba" />
-      </intent-filter>
-      <intent-filter>
-        <action android:name="android.intent.action.VIEW" />
-        <category android:name="android.intent.category.DEFAULT" />
-        <data android:mimeType="*/*" android:pathPattern=".*\\.hma" />
-      </intent-filter>
-    </activity>
-
   </application>
 
 </manifest>

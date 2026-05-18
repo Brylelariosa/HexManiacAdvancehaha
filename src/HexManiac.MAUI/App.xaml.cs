@@ -7,15 +7,18 @@ using Microsoft.Maui.Graphics;
 
 namespace HavenSoft.HexManiac.MAUI {
    public partial class App : Application {
+      private readonly EditorViewModel editor;
+
       public App(EditorViewModel editor) {
+         this.editor = editor;
          InitializeComponent();
          ApplyTheme(editor.Theme);
          editor.Theme.PropertyChanged += (_, _) => MainThread.BeginInvokeOnMainThread(() => ApplyTheme(editor.Theme));
-         Windows[0].Page = new AppShell(editor);
+         // Do NOT access Windows[0] here — it's empty until CreateWindow() is called by the platform.
       }
 
       protected override Window CreateWindow(IActivationState activationState)
-         => new Window(new ContentPage()); // placeholder; overwritten in constructor
+         => new Window(new AppShell(editor));
 
       private void ApplyTheme(Theme theme) {
          if (Resources == null) return;

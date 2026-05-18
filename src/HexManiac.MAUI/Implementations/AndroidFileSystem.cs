@@ -83,7 +83,7 @@ namespace HavenSoft.HexManiac.MAUI.Implementations {
       public (short[] image, int width) LoadImage(string fileName = null) {
          try {
             if (fileName == null) {
-               var r = FilePicker.Default.PickAsync(new PickOptions { PickerTitle = "Open Image", FileTypes = FilePickerFileType.Images }).GetAwaiter().GetResult();
+               var r = FilePicker.Default.PickAsync(new PickOptions { PickerTitle = "Open Image", FileTypes = Microsoft.Maui.Storage.FilePickerFileType.Images }).GetAwaiter().GetResult();
                if (r == null) return (null, 0);
                fileName = r.FullPath;
             }
@@ -139,9 +139,9 @@ namespace HavenSoft.HexManiac.MAUI.Implementations {
          return dir;
       }
       private static void EnsureDirectory(string dir) { if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) Directory.CreateDirectory(dir); }
-      private static FilePickerFileType BuildFileTypes(string[] extensions) {
+      private static Microsoft.Maui.Storage.FilePickerFileType BuildFileTypes(string[] extensions) {
          if (extensions == null || extensions.Length == 0) return null;
-         return new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>> {
+         return new Microsoft.Maui.Storage.FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>> {
             { DevicePlatform.Android, extensions.Select(e => e.StartsWith(".") ? e : "." + e) },
          });
       }

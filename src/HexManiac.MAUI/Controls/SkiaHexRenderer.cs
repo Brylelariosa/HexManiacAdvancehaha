@@ -104,7 +104,7 @@ namespace HavenSoft.HexManiac.MAUI.Controls {
          paint.Color = color;
          float x = Position.X * cellWidth + (cellWidth - f.MeasureText(text)) / 2f;
          float y = Position.Y * cellHeight + (cellHeight + f.Size) / 2f - 2f;
-         canvas.DrawText(text, x, y, SKTextAlign.Left, f, paint);
+         canvas.DrawText(text, x, y, f, paint);
       }
    }
 }

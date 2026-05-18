@@ -4,6 +4,7 @@ using HavenSoft.HexManiac.Core.Models;
 using HavenSoft.HexManiac.Core.ViewModels;
 using HavenSoft.HexManiac.Core.ViewModels.DataFormats;
 using SkiaSharp;
+using System.Runtime.InteropServices;
 using System;
 using ModelPoint = HavenSoft.HexManiac.Core.Models.Point;
 
@@ -104,7 +105,7 @@ namespace HavenSoft.HexManiac.MAUI.Controls {
          paint.Color = color;
          float x = Position.X * cellWidth + (cellWidth - f.MeasureText(text)) / 2f;
          float y = Position.Y * cellHeight + (cellHeight + f.Size) / 2f - 2f;
-         canvas.DrawText(text, x, y, f, paint);
+         canvas.DrawText(MemoryMarshal.Cast<char, ushort>(text.AsSpan()), x, y, f, paint);
       }
    }
 }

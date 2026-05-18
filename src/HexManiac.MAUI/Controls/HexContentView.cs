@@ -91,7 +91,7 @@ namespace HavenSoft.HexManiac.MAUI.Controls {
          using var font  = new SKFont(SKTypeface.FromFamilyName("monospace"), FontSize * 0.8f);
          for (int col = 0; col < _viewPort.Width; col++) {
             float x = HeaderWidth + col * CellWidth + (CellWidth - font.MeasureText($"{col % 16:X}")) / 2f;
-            canvas.DrawText($"{col % 16:X}", x, FontSize, SKTextAlign.Left, font, paint);
+            canvas.DrawText($"{col % 16:X}", x, FontSize, font, paint);
          }
       }
 
@@ -101,7 +101,7 @@ namespace HavenSoft.HexManiac.MAUI.Controls {
          for (int row = 0; row < _viewPort.Height; row++) {
             int addr = (_viewPort.ScrollValue + row) * _viewPort.Width;
             float y = HeaderHeight + row * CellHeight + CellHeight * 0.72f;
-            canvas.DrawText($"{addr:X6}", 2f, y, SKTextAlign.Left, font, paint);
+            canvas.DrawText($"{addr:X6}", 2f, y, font, paint);
          }
       }
 
@@ -153,7 +153,7 @@ namespace HavenSoft.HexManiac.MAUI.Controls {
 
       private void OnTouch(object sender, SKTouchEventArgs e) {
          if (_viewPort == null) return;
-         float density = (float)(e.Info?.Width ?? 1) / (float)(Width > 0 ? Width : 1);
+         float density = (float)Microsoft.Maui.Devices.DeviceDisplay.MainDisplayInfo.Density;
 
          float logX = e.Location.X / density;
          float logY = e.Location.Y / density;

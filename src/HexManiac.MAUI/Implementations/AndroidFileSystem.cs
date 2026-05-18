@@ -38,7 +38,7 @@ namespace HavenSoft.HexManiac.MAUI.Implementations {
 
       private async Task<LoadedFile> OpenFileAsync(string description, string[] extensions) {
          try {
-            var result = await FilePicker.Default.PickAsync(new PickOptions {
+            var result = await Microsoft.Maui.Storage.FilePicker.Default.PickAsync(new Microsoft.Maui.Storage.PickOptions {
                PickerTitle = description ?? "Open ROM",
                FileTypes = BuildFileTypes(extensions),
             });
@@ -83,7 +83,7 @@ namespace HavenSoft.HexManiac.MAUI.Implementations {
       public (short[] image, int width) LoadImage(string fileName = null) {
          try {
             if (fileName == null) {
-               var r = FilePicker.Default.PickAsync(new PickOptions { PickerTitle = "Open Image", FileTypes = Microsoft.Maui.Storage.FilePickerFileType.Images }).GetAwaiter().GetResult();
+               var r = Microsoft.Maui.Storage.FilePicker.Default.PickAsync(new Microsoft.Maui.Storage.PickOptions { PickerTitle = "Open Image", FileTypes = Microsoft.Maui.Storage.FilePickerFileType.Images }).GetAwaiter().GetResult();
                if (r == null) return (null, 0);
                fileName = r.FullPath;
             }

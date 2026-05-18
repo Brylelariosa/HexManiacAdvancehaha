@@ -3,6 +3,7 @@ using HavenSoft.HexManiac.MAUI.Pages;
 using Microsoft.Maui;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Graphics;
 
 namespace HavenSoft.HexManiac.MAUI {
    public partial class App : Application {

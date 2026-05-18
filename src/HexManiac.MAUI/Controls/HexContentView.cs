@@ -1,6 +1,5 @@
 using HavenSoft.HexManiac.Core.Models;
 using HavenSoft.HexManiac.Core.ViewModels;
-using HavenSoft.HexManiac.Core.ViewModels.DataFormats;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Devices;
 using SkiaSharp;
@@ -14,25 +13,20 @@ using ModelPoint = HavenSoft.HexManiac.Core.Models.Point;
 
 namespace HavenSoft.HexManiac.MAUI.Controls {
    /// <summary>
-   /// The central hex grid view. Replaces the WPF HexContent custom FrameworkElement.
-   /// Renders using SkiaSharp for high-performance drawing on Android.
-   ///
-   /// Touch handling:
-   ///   Tap              → move cursor
-   ///   Long-press       → context menu
-   ///   Swipe vertical   → scroll
-   ///   Drag             → extend selection
+   /// SkiaSharp canvas that renders the hex grid and handles touch input.
+   /// Uses IEditableViewPort (not IViewPort) because SelectionStart/SelectionEnd
+   /// and IsSelected() are on IEditableViewPort.
    /// </summary>
    public class HexContentView : SKCanvasView {
-      // ── Layout constants ──────────────────────────────────────────────────────
-      public const float CellWidth  = 30f;
-      public const float CellHeight = 20f;
-      public const float FontSize   = 14f;
-      public const float HeaderWidth = 50f; // left gutter showing row addresses
+      public const float CellWidth   = 30f;
+      public const float CellHeight  = 20f;
+      public const float FontSize    = 13f;
+      public const float HeaderWidth = 52f;
+      public const float HeaderHeight= 18f;
 
       // ── Bound view-port ───────────────────────────────────────────────────────
-      private IViewPort _viewPort;
-      public IViewPort ViewPort {
+      private IEditableViewPort _viewPort;
+      public IEditableViewPort ViewPort {
          get => _viewPort;
          set {
             if (_viewPort != null) {
@@ -51,198 +45,151 @@ namespace HavenSoft.HexManiac.MAUI.Controls {
 
       public HexContentView() {
          EnableTouchEvents = true;
-         Touch += OnTouch;
+         Touch      += OnTouch;
          SizeChanged += (_, _) => SizeViewPort();
       }
 
-      // ── Resize the viewmodel when the canvas resizes ──────────────────────────
       private void SizeViewPort() {
          if (_viewPort == null) return;
-         int cols = Math.Max(1, (int)(Width  / CellWidth));
-         int rows = Math.Max(1, (int)(Height / CellHeight));
+         int cols = Math.Max(1, (int)((Width  - HeaderWidth)  / CellWidth));
+         int rows = Math.Max(1, (int)((Height - HeaderHeight) / CellHeight));
          _viewPort.Width  = cols;
          _viewPort.Height = rows;
       }
 
-      // ── Invalidate on data / property changes ─────────────────────────────────
-      private void OnDataChanged(object sender, NotifyCollectionChangedEventArgs e) => InvalidateSurface();
-      private void OnPropertyChanged(object sender, PropertyChangedEventArgs e) {
-         var triggers = new[] {
-            nameof(IViewPort.ScrollValue),
-            nameof(ViewPort.SelectionStart),
-            nameof(ViewPort.SelectionEnd),
-            nameof(ViewPort.UpdateInProgress),
-         };
-         if (triggers.Contains(e.PropertyName)) InvalidateSurface();
+      private void OnDataChanged(object s, NotifyCollectionChangedEventArgs e) => InvalidateSurface();
+      private void OnPropertyChanged(object s, PropertyChangedEventArgs e) {
+         if (e.PropertyName is nameof(IViewPort.ScrollValue)
+            or nameof(IEditableViewPort.SelectionStart)
+            or nameof(IEditableViewPort.SelectionEnd)
+            or nameof(IViewPort.UpdateInProgress))
+            InvalidateSurface();
       }
 
-      // ── SkiaSharp paint ───────────────────────────────────────────────────────
+      // ── Paint ─────────────────────────────────────────────────────────────────
       protected override void OnPaintSurface(SKPaintSurfaceEventArgs e) {
          base.OnPaintSurface(e);
          var canvas = e.Surface.Canvas;
-         canvas.Clear(ParseThemeColor("#1E1E2E")); // Background
-
+         canvas.Clear(new SKColor(0x1E, 0x1E, 0x2E));
          if (_viewPort == null) return;
 
-         float scale = (float)DeviceDisplay.MainDisplayInfo.Density;
-         canvas.Scale(scale);  // HiDPI
+         float scale = (float)(e.Info.Width / Width);
+         canvas.Save();
+         canvas.Scale(scale);
 
-         DrawHeaders(canvas);
+         DrawColumnHeaders(canvas);
+         DrawRowHeaders(canvas);
          DrawCells(canvas);
          DrawSelection(canvas);
          DrawScrollbar(canvas);
+
+         canvas.Restore();
       }
 
-      private void DrawHeaders(SKCanvas canvas) {
+      private void DrawColumnHeaders(SKCanvas canvas) {
          using var paint = new SKPaint { Color = new SKColor(0x45, 0x47, 0x5A), IsAntialias = true };
-         using var font  = new SKFont(SKTypeface.FromFamilyName("monospace"), FontSize * 0.85f);
-
-         // Column headers: 00 01 02 … (width - 1)
+         using var font  = new SKFont(SKTypeface.FromFamilyName("monospace"), FontSize * 0.8f);
          for (int col = 0; col < _viewPort.Width; col++) {
-            float x = HeaderWidth + col * CellWidth + CellWidth / 2f - 8f;
-            canvas.DrawText($"{col:X2}", x, FontSize, font, paint);
+            float x = HeaderWidth + col * CellWidth + (CellWidth - font.MeasureText($"{col % 16:X}")) / 2f;
+            canvas.DrawText($"{col % 16:X}", x, FontSize, SKTextAlign.Left, font, paint);
          }
+      }
 
-         // Row headers: absolute address
+      private void DrawRowHeaders(SKCanvas canvas) {
+         using var paint = new SKPaint { Color = new SKColor(0x45, 0x47, 0x5A), IsAntialias = true };
+         using var font  = new SKFont(SKTypeface.FromFamilyName("monospace"), FontSize * 0.75f);
          for (int row = 0; row < _viewPort.Height; row++) {
             int addr = (_viewPort.ScrollValue + row) * _viewPort.Width;
-            float y = CellHeight + row * CellHeight + CellHeight * 0.75f;
-            canvas.DrawText($"{addr:X6}", 2f, y, font, paint);
+            float y = HeaderHeight + row * CellHeight + CellHeight * 0.72f;
+            canvas.DrawText($"{addr:X6}", 2f, y, SKTextAlign.Left, font, paint);
          }
       }
 
       private void DrawCells(SKCanvas canvas) {
-         if (_viewPort == null) return;
-         var renderer = new SkiaHexRenderer(
-            canvas, _viewPort,
-            _viewPort.Width, _viewPort.Height,
-            CellWidth, CellHeight, FontSize);
-
-         float offsetX = HeaderWidth;
-         float offsetY = CellHeight; // leave room for column headers
-         canvas.Translate(offsetX, offsetY);
-
+         canvas.Save();
+         canvas.Translate(HeaderWidth, HeaderHeight);
+         var renderer = new SkiaHexRenderer(canvas, CellWidth, CellHeight, FontSize);
          for (int row = 0; row < _viewPort.Height; row++) {
             for (int col = 0; col < _viewPort.Width; col++) {
-               if (row >= _viewPort.Count || col >= _viewPort[row].Count) continue;
-               var cell = _viewPort[row][col];
-               if (cell.Format == null) continue;
-
+               var cell = _viewPort[col, row];
+               if (cell?.Format == null) continue;
                renderer.Position = new ModelPoint(col, row);
                cell.Format.Visit(renderer, cell.Value);
             }
          }
-
-         canvas.Translate(-offsetX, -offsetY);
+         canvas.Restore();
       }
 
       private void DrawSelection(SKCanvas canvas) {
          if (_viewPort == null) return;
-         var start = _viewPort.SelectionStart;
-         var end   = _viewPort.SelectionEnd;
-         if (start == end && start == new ModelPoint(-1, -1)) return;
-
-         using var selPaint = new SKPaint {
-            Color = new SKColor(0x89, 0xB4, 0xFA, 0x55),
-            IsAntialias = false,
-         };
-
-         // Normalise start/end
-         int startIndex = start.Y * _viewPort.Width + start.X;
-         int endIndex   = end.Y   * _viewPort.Width + end.X;
-         if (startIndex > endIndex) (startIndex, endIndex) = (endIndex, startIndex);
-
-         for (int i = startIndex; i <= endIndex; i++) {
-            int row = i / _viewPort.Width;
-            int col = i % _viewPort.Width;
-            float x = HeaderWidth + col * CellWidth;
-            float y = CellHeight + row * CellHeight;
-            canvas.DrawRect(x, y, CellWidth, CellHeight, selPaint);
+         using var selPaint = new SKPaint { Color = new SKColor(0x89, 0xB4, 0xFA, 0x55), IsAntialias = false };
+         for (int row = 0; row < _viewPort.Height; row++) {
+            for (int col = 0; col < _viewPort.Width; col++) {
+               if (!_viewPort.IsSelected(new ModelPoint(col, row))) continue;
+               float x = HeaderWidth + col * CellWidth;
+               float y = HeaderHeight + row * CellHeight;
+               canvas.DrawRect(x, y, CellWidth, CellHeight, selPaint);
+            }
          }
       }
 
       private void DrawScrollbar(SKCanvas canvas) {
-         if (_viewPort == null) return;
          int total = _viewPort.MaximumScroll + _viewPort.Height;
          if (total <= _viewPort.Height) return;
-
          float canvasH = (float)Height;
          float thumbH  = canvasH * _viewPort.Height / total;
          float thumbY  = canvasH * _viewPort.ScrollValue / total;
-
-         float scrollbarX = (float)Width - 6f;
-
-         using var trackPaint = new SKPaint { Color = new SKColor(0x31, 0x32, 0x44) };
-         using var thumbPaint = new SKPaint { Color = new SKColor(0x89, 0xB4, 0xFA, 0xAA), IsAntialias = true };
-
-         canvas.DrawRect(scrollbarX, 0, 6, canvasH, trackPaint);
-         canvas.DrawRoundRect(scrollbarX, thumbY, 6, thumbH, 3, 3, thumbPaint);
+         float scrollX = (float)Width - 6f;
+         using var track = new SKPaint { Color = new SKColor(0x31, 0x32, 0x44) };
+         using var thumb = new SKPaint { Color = new SKColor(0x89, 0xB4, 0xFA, 0xAA), IsAntialias = true };
+         canvas.DrawRect(scrollX, 0, 6, canvasH, track);
+         canvas.DrawRoundRect(scrollX, thumbY, 6, thumbH, 3, 3, thumb);
       }
 
-      // ── Touch handling ────────────────────────────────────────────────────────
+      // ── Touch ─────────────────────────────────────────────────────────────────
       private float _scrollStartY;
-      private int _scrollStartValue;
-      private bool _isDragging;
+      private int   _scrollStartVal;
+      private bool  _isDragging;
 
       private void OnTouch(object sender, SKTouchEventArgs e) {
          if (_viewPort == null) return;
+         float density = (float)(e.Info?.Width ?? 1) / (float)(Width > 0 ? Width : 1);
 
-         // Convert Skia coords → cell coords
-         float density = (float)DeviceDisplay.MainDisplayInfo.Density;
          float logX = e.Location.X / density;
          float logY = e.Location.Y / density;
-
-         int col = (int)((logX - HeaderWidth) / CellWidth);
-         int row = (int)((logY - CellHeight)  / CellHeight);
-         col = Math.Clamp(col, 0, _viewPort.Width  - 1);
-         row = Math.Clamp(row, 0, _viewPort.Height - 1);
+         int col = Math.Clamp((int)((logX - HeaderWidth)  / CellWidth),  0, _viewPort.Width  - 1);
+         int row = Math.Clamp((int)((logY - HeaderHeight) / CellHeight), 0, _viewPort.Height - 1);
 
          switch (e.ActionType) {
             case SKTouchAction.Pressed:
-               _scrollStartY     = e.Location.Y;
-               _scrollStartValue = _viewPort.ScrollValue;
-               _isDragging       = false;
-               _viewPort.SelectionStart = new ModelPoint(col, row);
-               _viewPort.SelectionEnd   = new ModelPoint(col, row);
+               _scrollStartY   = e.Location.Y;
+               _scrollStartVal = _viewPort.ScrollValue;
+               _isDragging     = false;
+               MoveSelectionTo(col, row);
                break;
 
             case SKTouchAction.Moved:
                float dy = (e.Location.Y - _scrollStartY) / density;
-               if (Math.Abs(dy) > CellHeight / 2f) {
-                  // Treat as a scroll gesture
+               if (Math.Abs(dy) > CellHeight * 0.5f) {
                   _isDragging = true;
                   int delta = -(int)(dy / CellHeight);
-                  _viewPort.ScrollValue = Math.Clamp(
-                     _scrollStartValue + delta,
-                     0, _viewPort.MaximumScroll);
-               } else {
-                  // Treat as a selection drag
-                  _viewPort.SelectionEnd = new ModelPoint(col, row);
+                  _viewPort.ScrollValue = Math.Clamp(_scrollStartVal + delta, 0, _viewPort.MaximumScroll);
                }
                break;
 
             case SKTouchAction.Released:
-               if (!_isDragging) {
-                  // Tap: commit cursor position
-                  _viewPort.SelectionStart = new ModelPoint(col, row);
-                  _viewPort.SelectionEnd   = new ModelPoint(col, row);
-               }
+               if (!_isDragging)
+                  MoveSelectionTo(col, row);
                break;
          }
-
          e.Handled = true;
          InvalidateSurface();
       }
 
-      // ── Helpers ───────────────────────────────────────────────────────────────
-      private static SKColor ParseThemeColor(string hex) {
-         hex = hex.TrimStart('#');
-         if (hex.Length == 6)
-            return new SKColor(
-               Convert.ToByte(hex[0..2], 16),
-               Convert.ToByte(hex[2..4], 16),
-               Convert.ToByte(hex[4..6], 16));
-         return SKColors.Black;
+      private void MoveSelectionTo(int col, int row) {
+         // Convert grid position to ROM address and set via SelectedAddress (string setter on IViewPort)
+         int addr = (_viewPort.ScrollValue + row) * _viewPort.Width + col;
+         _viewPort.SelectedAddress = addr.ToString("X6");
       }
    }
 }

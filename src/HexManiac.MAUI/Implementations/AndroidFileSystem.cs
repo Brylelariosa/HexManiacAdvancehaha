@@ -1,3 +1,6 @@
+// Alias to disambiguate from Microsoft.Maui.Storage.IFileSystem
+using CoreFS      = HavenSoft.HexManiac.Core.Models.IFileSystem;
+using HavenSoft.HexManiac.Core;
 using HavenSoft.HexManiac.Core.Models;
 using HavenSoft.HexManiac.Core.ViewModels;
 using HavenSoft.HexManiac.Core.ViewModels.Images;
@@ -6,7 +9,8 @@ using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.ApplicationModel.DataTransfer;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Devices;
-using Microsoft.Maui.Storage;
+// Note: Microsoft.Maui.Storage is intentionally NOT imported to avoid IFileSystem clash.
+// We reference FileSystem via its full name below.
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,7 +18,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 namespace HavenSoft.HexManiac.MAUI.Implementations {
-   public class AndroidFileSystem : IFileSystem, IWorkDispatcher {
+   public class AndroidFileSystem : CoreFS, IWorkDispatcher {
       public string CopyText {
          get => Clipboard.Default.GetTextAsync().GetAwaiter().GetResult() ?? string.Empty;
          set => MainThread.InvokeOnMainThreadAsync(() => Clipboard.Default.SetTextAsync(value)).GetAwaiter().GetResult();
@@ -39,8 +43,7 @@ namespace HavenSoft.HexManiac.MAUI.Implementations {
                FileTypes = BuildFileTypes(extensions),
             });
             if (result == null) return null;
-            var data = File.ReadAllBytes(result.FullPath);
-            return new LoadedFile(result.FullPath, data);
+            return new LoadedFile(result.FullPath, File.ReadAllBytes(result.FullPath));
          } catch { return null; }
       }
       public string OpenFolder() => GetAppSaveDir();
@@ -50,12 +53,12 @@ namespace HavenSoft.HexManiac.MAUI.Implementations {
          if (!File.Exists(fileName)) return null;
          try { return new LoadedFile(fileName, File.ReadAllBytes(fileName)); } catch { return null; }
       }
-      private readonly Dictionary<string, List<Action<IFileSystem>>> listeners = new();
-      public void AddListenerToFile(string fileName, Action<IFileSystem> listener) {
+      private readonly Dictionary<string, List<Action<CoreFS>>> listeners = new();
+      public void AddListenerToFile(string fileName, Action<CoreFS> listener) {
          if (!listeners.ContainsKey(fileName)) listeners[fileName] = new();
          listeners[fileName].Add(listener);
       }
-      public void RemoveListenerForFile(string fileName, Action<IFileSystem> listener) {
+      public void RemoveListenerForFile(string fileName, Action<CoreFS> listener) {
          if (listeners.TryGetValue(fileName, out var list)) list.Remove(listener);
       }
       public bool Save(LoadedFile file) {
@@ -110,7 +113,7 @@ namespace HavenSoft.HexManiac.MAUI.Implementations {
       public bool? ShowCustomMessageBox(string message, bool showYesNoCancel = true, params ProcessModel[] links) {
          bool? result = null;
          MainThread.InvokeOnMainThreadAsync(async () => {
-            if (showYesNoCancel) { result = await Shell.Current.DisplayAlert("HexManiacAdvance", message, "Yes", "No"); }
+            if (showYesNoCancel) result = await Shell.Current.DisplayAlert("HexManiacAdvance", message, "Yes", "No");
             else { await Shell.Current.DisplayAlert("HexManiacAdvance", message, "OK"); result = true; }
          }).GetAwaiter().GetResult();
          return result;

@@ -128,10 +128,13 @@ jobs:
             # "No assemblies found ... Assuming this is part of Fast Deployment" crash:
             # a plain dotnet build Debug APK expects an IDE to push assemblies to the
             # device separately, so sideloading the raw APK has nothing to load.
+            # RuntimeIdentifiers=android-arm64 builds for one ABI instead of all
+            # four (arm64/armeabi-v7a/x86/x86_64), which is most of the size cut.
             dotnet build "$PROJECT" -f "$TFM" -c Debug \
               -p:AndroidSdkDirectory=$ANDROID_SDK_ROOT \
               -p:EmbedAssembliesIntoApk=true \
-              -p:AndroidUseFastDeployment=false
+              -p:AndroidUseFastDeployment=false \
+              -p:RuntimeIdentifiers=android-arm64
           fi
 
       - name: Locate APK
